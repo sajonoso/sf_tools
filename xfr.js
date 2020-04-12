@@ -304,7 +304,7 @@ const StreamFile = function (res, fileName, contentType) {
   res.writeHead(200, {
     'Content-Type': contentType
   })
-  var readStream = fs.createReadStream(fileName);
+  var readStream = fs.createReadStream(fileName, {highWaterMark: 4*1024*1024});
 
   readStream.on('data', function(chunk) {
       res.write(chunk, 'binary');
