@@ -1,42 +1,43 @@
 /* 2> nul:
 @echo off
 setlocal
-set CURRENTPATH=%CD%
-R:\programs\node\node %0
+r:\programs\node\node %0
+pause
 goto :eof
 */
-
 /*
  DESCRIPTION: Simple static file web server.
  Under windows this can be made into a self executing batch file by renaming from .js to .cmd
 */
 
 // const HTTP_PORT = 443;
-const HTTP_PORT = 80;
-const http = require('http');
-const https = require('https');
-const fs = require('fs');
-const path = require('path');
+const HTTP_PORT = 3003;
+const http = require("http");
+const https = require("https");
+const fs = require("fs");
+const path = require("path");
+const print = console.log
 
 // common mime types first one is the default
+// prettier-ignore
 const MIME_TYPES = [
-  {ext: 'bin', type: 'application/octet-stream'}, 
-  {ext: 'txt', type: 'text/plain'},
-  {ext: 'ks', type: 'text/plain'},
-  {ext: 'html', type: 'text/html'},
-  {ext: 'htm', type: 'text/html'},
-  {ext: 'js', type: 'text/javascript'},
-  {ext: 'css', type: 'text/css'},
-  {ext: 'json', type: 'application/json'},
-  {ext: 'png', type: 'image/png'},
-  {ext: 'jpg', type: 'image/jpg'},
-  {ext: 'gif', type: 'image/gif'},
-  {ext: 'wav', type: 'audio/wav'},
-  {ext: 'ogg', type: 'audio/ogg'},
-  {ext: 'mp3', type: 'audio/mp3'},
-  {ext: 'm4a', type: 'audio/mp4'},
-  {ext: 'mp4', type: 'video/mp4'},
-]
+  { ext: "bin", type: "application/octet-stream" },
+  { ext: "txt", type: "text/plain" },
+  { ext: "ks", type: "text/plain" },
+  { ext: "html", type: "text/html" },
+  { ext: "htm", type: "text/html" },
+  { ext: "js", type: "text/javascript" },
+  { ext: "css", type: "text/css" },
+  { ext: "json", type: "application/json" },
+  { ext: "png", type: "image/png" },
+  { ext: "jpg", type: "image/jpg" },
+  { ext: "gif", type: "image/gif" },
+  { ext: "wav", type: "audio/wav" },
+  { ext: "ogg", type: "audio/ogg" },
+  { ext: "mp3", type: "audio/mp3" },
+  { ext: "m4a", type: "audio/mp4" },
+  { ext: "mp4", type: "video/mp4" }
+];
 
 /*
 Certificate generated with:
@@ -49,7 +50,8 @@ Set Chrome flag to allow self signed certificate
 chrome://flags/#allow-insecure-localhost
 */
 
-var cert_pem = function () {/*
+var cert_pem = function() {
+  /*
 -----BEGIN CERTIFICATE-----
 MIIDazCCAlOgAwIBAgIJAM9YN4GZJJZcMA0GCSqGSIb3DQEBCwUAMEwxCzAJBgNV
 BAYTAkFVMRgwFgYDVQQIDA9OZXcgU291dGggV2FsZXMxDzANBgNVBAcMBlN5ZG5l
@@ -71,9 +73,11 @@ ldzcRqA902vzYK3sBnuReV/uwykHDw0xcgp5HyYRGz5KzLEiOuMHrPCflcarawFF
 x1jHpjVqQ/lE9mBv9GMxrvvP+nsUPmd+S01MexVZWm2ZGb4h8yshwNdCr/s54W4E
 Gl6l9nD1K5Gr8EeOyayS
 -----END CERTIFICATE-----
-*/};
+*/
+};
 
-var key_pem = function () {/*
+var key_pem = function() {
+  /*
 -----BEGIN PRIVATE KEY-----
 MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDvKi3JlTdseb9h
 Fe2K17Isptx2TtGPNbYIrKsSYa50k8eWwsFrfOe/gBWIwZtyVeAfrVWv1VFyomlr
@@ -102,73 +106,128 @@ djs0FVD3lKt0T3fuH4qt2nwzqInZCASpvugUjYU4U+f595C+384BifN52LqCB8Rd
 BSKA7EHgo18vwwkDq7zPMclxAp368OPZZQ81Hi1ooiLjoWtyFjHTUA6s2/sPiKHZ
 H4NZ2/TOSYrhf+yTiObyAxPI
 -----END PRIVATE KEY-----
-*/};
+*/
+};
 
 const getText = function(fn) {
-  var rawText = fn.toString()
-  return rawText.slice(rawText.indexOf('/*') + 2, rawText.length - 3)
-}
+  var rawText = fn.toString();
+  return rawText.slice(rawText.indexOf("/*") + 2, rawText.length - 3);
+};
 
 const dateFormat = function(dateObj, format) {
-  if (!format) return ''
+  if (!format) return "";
 
-  const hour24 = dateObj.getHours()
-  let hour12 = hour24 > 12 ? hour24 - 12 : hour24
-  if (!hour12) hour12 = 12
-  const amPm = hour24 > 12 ? 'pm' : 'am'
-  const pad2 = num => "00".concat(num).slice(-2)
+  const hour24 = dateObj.getHours();
+  let hour12 = hour24 > 12 ? hour24 - 12 : hour24;
+  if (!hour12) hour12 = 12;
+  const amPm = hour24 > 12 ? "pm" : "am";
+  const pad2 = num => "00".concat(num).slice(-2);
 
-  return format.replace("YYYY", dateObj.getFullYear() )
-    .replace("MM", pad2(dateObj.getMonth()+1) )
-    .replace("DD", pad2(dateObj.getDay()+1) )
-    .replace("HH", pad2(hour24) )
-    .replace("hh", pad2(hour12) )
-    .replace("mm", pad2(dateObj.getMinutes()) )
-    .replace("ss", pad2(dateObj.getSeconds()) )
-    .replace("a", amPm )
-}
+  return format
+    .replace("YYYY", dateObj.getFullYear())
+    .replace("MM", pad2(dateObj.getMonth() + 1))
+    .replace("DD", pad2(dateObj.getDay() + 1))
+    .replace("HH", pad2(hour24))
+    .replace("hh", pad2(hour12))
+    .replace("mm", pad2(dateObj.getMinutes()))
+    .replace("ss", pad2(dateObj.getSeconds()))
+    .replace("a", amPm);
+};
 
 const https_options = {
-  passphrase: 'thepass',
+  passphrase: "thepass",
   key: getText(key_pem), // fs.readFileSync('key.pem'),
   cert: getText(cert_pem) // fs.readFileSync('cert.pem')
 };
 
-const router = function (request, response) {
-  console.log(dateFormat(new Date(), "YYYY-MM-DD HH:mm:ss ") + request.method + ' ' + request.url)
-
-  const urlparts = request.url.split('?')
-  var filePath = '.' + urlparts[0]
-  if (filePath == './') filePath = './index.html'
-
-  var extname = path.extname(filePath)
+const fileTypeFromName = fileName => {
+  var extname = path.extname(fileName);
   var contentType = MIME_TYPES[0].type;
-  var typeMatched = MIME_TYPES.filter(function(item) { return ('.'+item.ext) === extname; })
-  if (typeMatched && typeMatched.length === 1) contentType = typeMatched[0].type
+  var typeMatched = MIME_TYPES.filter(function(item) {
+    return "." + item.ext === extname;
+  });
+  if (typeMatched && typeMatched.length === 1)
+    contentType = typeMatched[0].type;
 
-  fs.readFile(filePath, function (error, content) {
-    if (error) {
-      if (error.code == 'ENOENT') {
-        response.writeHead(404, { 'Content-Type': 'text/html' })
-        response.end('<html><body>Page not found</body></html>', 'utf-8')
-      } else {
-        response.writeHead(500)
-        response.end('internal error. error code: ' + error.code + ' ..\n')
-        response.end()
-      }
-    } else {
-      response.writeHead(200, {
-        'Content-Type': contentType
-      })
-      response.end(content, 'utf-8');
+  return contentType;
+};
+
+const send404 = res => {
+  res.writeHead(404, { "Content-Type": "text/html" });
+  res.end("<html><body>Page not found</body></html>", "utf-8");
+};
+
+const send500Error = res => {
+  res.writeHead(500);
+  res.end("internal error. error code: " + error.code + " ..\n");
+};
+
+const sendFile = (res, filePath) => {
+  print(">sendFile: ", filePath);
+  if (fs.existsSync(filePath)) {
+    res.writeHead(200, { "Content-Type": fileTypeFromName(filePath) });
+    try {
+      // prettier-ignore
+      var rstream = fs.createReadStream(filePath, { encoding: "utf8", highWaterMark: 0x400000}); /* 4Mb */
+      rstream.pipe(res);
+    } catch (e) {
+      send500Error(res);
     }
-  })
-}
+  } else {
+    send404(res);
+  }
+};
 
-if (HTTP_PORT===443) {
-  https.createServer(https_options, router).listen(HTTP_PORT)
-} else {
-  http.createServer(router).listen(HTTP_PORT)
-}
+const handleGET = (req, res) => {
+  const file = req.url.split("?")[0];
 
-console.log('Server running at ' + (HTTP_PORT === 443 ? 'HTTPS' : 'HTTP') + '://localhost:' + HTTP_PORT + '/')
+  if (file === "/") {
+    sendFile(res, path.resolve(`./index.html`));
+  } else if (file === "/version") {
+    res.writeHead(404, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ version: 1, status: "ok" }), "utf-8");
+  } else if (file && file.indexOf("/") === 0 && file.length > 1) {
+    sendFile(res, path.resolve(`.${file}`));
+  } else {
+    send404(res);
+  }
+};
+
+const postEcho = (req, res, body) => {
+  res.writeHead(200, { "Content-Type": "application/json" });
+  body.message = "ok";
+  res.end(JSON.stringify(body));
+};
+
+const handlePOST = (req, res) => {
+  let body = "";
+
+  req.on("data", chunk => {
+    body += chunk.toString();
+  });
+  req.on("end", () => {
+    if (req.url === "/echo") postEcho(req, res, JSON.parse(body));
+  });
+};
+
+const router = (req, res) => {
+  const requestMethod = req.method;
+  // prettier-ignore
+  print(`${dateFormat(new Date(), "YYYY-MM-DD HH:mm:ss")} ${requestMethod} ${req.url}`);
+
+  if ("POST" === requestMethod) handlePOST(req, res);
+  if ("GET" === requestMethod) handleGET(req, res);
+};
+
+const startWebserver = (port, router) => {
+  if (port === 443) {
+    https.createServer(https_options, router).listen(port);
+  } else {
+    http.createServer(router).listen(port);
+  }
+
+  // prettier-ignore
+  console.log(`Server running at ${port === 443 ? "HTTPS" : "HTTP"}://localhost:${port}/`);
+};
+
+startWebserver(HTTP_PORT, router)
