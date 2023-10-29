@@ -15,7 +15,7 @@ goto :eof
 */
 
 // const HTTP_PORT = 443;
-const HTTP_PORT = 80;
+const HTTP_PORT = 1080;
 const http = require('http');
 const https = require('https');
 const fs = require('fs');
@@ -34,6 +34,7 @@ const MIME_TYPES = [
   { ext: 'js', type: 'text/javascript' },
   { ext: 'css', type: 'text/css' },
   { ext: 'json', type: 'application/json' },
+  { ext: 'svg', type: 'image/svg+xml' },
   { ext: 'png', type: 'image/png' },
   { ext: 'jpg', type: 'image/jpg' },
   { ext: 'gif', type: 'image/gif' },
@@ -317,7 +318,7 @@ const StreamFile = function (res, fileName, contentType) {
 
 const handleGET = function (req, res) {
   const urlparts = req.url.split('?')
-  var filePath = '.' + urlparts[0]
+  var filePath = '.' + decodeURIComponent(urlparts[0])
   if (filePath == './') return showMainForm(res)
 
   var extname = path.extname(filePath)
